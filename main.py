@@ -134,15 +134,19 @@ class PersonalAssistant:
             table.add_column("[blue]Ім'я[/blue]")
             table.add_column("[magenta]Дата народження[/magenta]")
             table.add_column("[yellow]Залишилося днів[/yellow]")
+            table.add_column("[green]Вік[/green]")
 
             for contact in upcoming_birthdays:
                 remaining_days = (self.get_next_birthday(contact) - today).days
                 birthday_str = contact['birthday'].strftime('%d-%m-%Y')
 
+                age = today.year - contact['birthday'].year - ((today.month, today.day) < (contact['birthday'].month, contact['birthday'].day))
+
                 table.add_row(
-                    Text(contact['name'], style="blue"),
-                    Text(birthday_str, style="magenta"),
-                    Text(str(remaining_days), style="yellow")
+                Text(contact['name'], style="blue"),
+                Text(birthday_str, style="magenta"),
+                Text(str(remaining_days), style="yellow"),
+                Text(str(age), style="green")
                 )
             # Встановлення відстані від верхнього краю екрану
             console.print("\n" * 10)
