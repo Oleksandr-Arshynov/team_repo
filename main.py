@@ -140,7 +140,7 @@ class PersonalAssistant:
                 remaining_days = (self.get_next_birthday(contact) - today).days
                 birthday_str = contact['birthday'].strftime('%d-%m-%Y')
 
-                age = today.year - contact['birthday'].year - ((today.month, today.day) < (contact['birthday'].month, contact['birthday'].day))
+                age = today.year - contact['birthday'].year + 1 - ((today.month, today.day) < (contact['birthday'].month, contact['birthday'].day))
 
                 table.add_row(
                 Text(contact['name'], style="blue"),
@@ -254,7 +254,7 @@ class PersonalAssistant:
         table.add_column("[blue]Текст[/blue]")
         table.add_column("[cyan]Теги[/cyan]")
 
-        for i, note in enumerate(self.notes):
+        for i, note in enumerate(self.notes, start=1):
             table.add_row(
                 Text(str(i), style="blue"),
                 Text(note.text, style="blue"),
