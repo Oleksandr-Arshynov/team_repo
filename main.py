@@ -8,7 +8,6 @@ from rich.table import Table
 from rich.text import Text
 from dateutil import parser
 from rich.live import Live
-import sys
 
 console = Console()
 
@@ -348,6 +347,7 @@ class PersonalAssistant:
 
 
     def run(self):
+        completer = WordCompleter(self.commands, ignore_case=True)
         """ Основний цикл виконання програми. Полягає в тому, 
             що він виводить вітання та список команд, а потім 
             чекає на введення команди"""
@@ -362,7 +362,7 @@ class PersonalAssistant:
         self.display_commands_table()
         
         while True:
-            user_input = input("Введіть команду: ")
+            user_input = prompt("Введіть команду: ", completer=completer).lower()
             assistant.analyze_user_input(user_input)
             # Перевірка команд і виклик відповідного методу
             
