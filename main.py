@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 from rich.console import Console
 import re
 from prompt_toolkit import prompt
@@ -6,6 +6,7 @@ from prompt_toolkit.completion import WordCompleter
 from tabulate import tabulate
 from rich.table import Table
 from rich.text import Text
+from dateutil import parser
 
 console = Console()
 
@@ -26,7 +27,9 @@ class PersonalAssistant:
     def __init__(self):
         self.contacts = []
         self.notes = []
-        self.commands = ['додати контакт', 'список контактів', 'пошук контактів', 'дні народження']
+        self.commands = ['додати контакт', 'список контактів', 'пошук контактів', 'дні народження', 
+                         'додати нотатку', 'пошук нотаток', 'видалити нотатку', 'список нотаток', 
+                         'редагувати нотатку', 'сортувати нотатки']
 
         # Встановлення автодоповнення на основі доступних команд
         self.command_completer = WordCompleter(self.commands)
@@ -41,6 +44,25 @@ class PersonalAssistant:
         # Перевірка правильності формату електронної пошти
         email_pattern = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
         return bool(re.match(email_pattern, email))
+
+    def add_contact_from_console(self):
+        console.print("[bold]Додавання нового контакту:[/bold]")
+
+        name = input("Ім'я: ")
+        address = input("Адреса: ")
+        phone = input("Телефон: ")
+        email = input("Електронна пошта: ")
+
+        # Додатково: питаємо користувача про день народження і дозволяємо різні формати
+        while True:
+            try:
+                birthday = input("Дата народження (день-місяць-рік): ")
+                birthday_date = parser.parse(birthday).date()
+                break  # Якщо парсинг відбувся успішно, виходимо з циклу
+            except ValueError:
+                console.print("[bold red]Помилка:[/bold red] Некоректний формат дати. Спробуйте ще раз.")
+
+        self.add_contact(name, address, phone, email, birthday_date)
 
     def add_contact(self, name, address, phone, email, birthday):
         # Перевірка правильності формату номера телефону та електронної пошти
@@ -70,17 +92,7 @@ class PersonalAssistant:
 
         self.contacts.append(new_contact)
         console.print(f"[green]Контакт {name} успішно доданий до книги контактів.[/green]")
-        
-    def add_contact_from_console(self):
-            console.print("[bold]Додавання нового контакту:[/bold]")
 
-            name = input("Ім'я: ")
-            address = input("Адреса: ")
-            phone = input("Телефон: ")
-            email = input("Електронна пошта: ")
-            birthday = input("Дата народження (день-місяць-рік): ")
-
-            self.add_contact(name, address, phone, email, birthday)
             
     def list_contacts(self):
         # Виведення списку контактів
@@ -95,12 +107,15 @@ class PersonalAssistant:
             table.add_column("[magenta]День народження[/magenta]")
 
             for contact in self.contacts:
+                # Перетворення дати народження в рядок
+                birthday_str = contact['birthday'].strftime('%d-%m-%Y')
+                
                 table.add_row(
                     Text(contact['name'], style="blue"),
                     Text(contact['address'], style="green"),
                     Text(contact['phone'], style="yellow"),
                     Text(contact['email'], style="cyan"),
-                    Text(contact['birthday'], style="magenta")
+                    Text(birthday_str, style="magenta")
                 )
 
             console.print(table)
@@ -110,20 +125,42 @@ class PersonalAssistant:
         today = datetime.today().date()
         upcoming_birthdays = [contact for contact in self.contacts if today < self.get_next_birthday(contact) <= today + timedelta(days)]
         if not upcoming_birthdays:
-            print(f'There are no upcoming birthdays in {days} days.')
+            console.print(f'[red]Немає наближених днів народження протягом {days} днів.[/red]')
         else:
-            print(f'Upcoming birthdays in {days} days: ')
+            table = Table(title=f'Наближені дні народження протягом {days} днів')
+            table.add_column("[blue]Ім'я[/blue]")
+            table.add_column("[magenta]День народження[/magenta]")
+            table.add_column("[green]Залишилось днів[/green]")
+            table.add_column("[cyan]Вік[/cyan]")
+
             for contact in upcoming_birthdays:
                 remaining_days = (self.get_next_birthday(contact) - today).days
-                print(f"Name: {contact.name}, Birth date: {self.get_next_birthday(contact).strftime('%d.%m.%Y')}, Remaining days: {remaining_days}")
+                age = today.year - contact['birthday'].year - ((today.month, today.day) < (contact['birthday'].month, contact['birthday'].day))
+                table.add_row(
+                    Text(contact['name'], style="blue"),
+                    Text(self.get_next_birthday(contact).strftime('%d.%m.%Y'), style="magenta"),
+                    Text(str(remaining_days), style="green"),
+                    Text(str(age), style="cyan")
+                )
+
+            console.print(table)
+   
 
     def get_next_birthday(self, contact):
         today = datetime.today().date()
-        next_birthday = contact.birth_date.replace(year=today.year)
-        if today > datetime(today.year, next_birthday.month, next_birthday.day).date():
-            next_birthday = next_birthday.replace(year=today.year + 1)
-        return next_birthday
 
+        # Перевірка, чи birth_date є рядком, і якщо так, конвертувати його у datetime.date
+        if isinstance(contact['birthday'], str):
+            birth_date = datetime.strptime(contact['birthday'], "%d-%m-%Y").date()
+        else:
+            birth_date = contact['birthday']
+
+        next_birthday = birth_date.replace(year=today.year)
+
+        if today > date(today.year, birth_date.month, birth_date.day):
+            next_birthday = next_birthday.replace(year=today.year + 1)
+
+        return next_birthday
 
     def search_contacts(self, query=None):
         if query is None:
@@ -164,15 +201,48 @@ class PersonalAssistant:
 
     def add_note(self, text, tags):
         # Додавання нової нотатки
-        pass
+        new_note = Note(text, tags)
+        self.notes.append(new_note)
+        console.print(f"[green]Нотатка успішно додана.[/green]")
+
+    def add_notes_from_console(self):
+        console.print("[bold]Додавання нових нотаток:[/bold]")
+
+        while True:
+            text = input("Текст нотатки (або введіть 'закінчити' для завершення): ")
+            if text.lower() == 'закінчити':
+                break
+
+            tags = input("Теги (розділіть їх комою): ").split(',')
+            self.add_note(text, tags)
 
     def list_notes(self):
         # Виведення списку нотаток
-        pass
+        if not self.notes:
+            console.print("[red]У вас немає жодних нотаток.[/red]")
+        else:
+            table = Table(title="Список нотаток")
+            table.add_column("[blue]Текст[/blue]")
+            table.add_column("[cyan]Теги[/cyan]")
+
+            for note in self.notes:
+                table.add_row(
+                    Text(note.text, style="blue"),
+                    Text(", ".join(note.tags), style="cyan")
+                )
+
+            console.print(table)
 
     def search_notes(self, query):
         # Пошук нотаток за запитом
-        pass
+        matching_notes = [note for note in self.notes if query.lower() in note.text.lower()]
+
+        if matching_notes:
+            console.print(f"[bold green]Результати пошуку:[/bold green]")
+            for note in matching_notes:
+                console.print(note.text)
+        else:
+            console.print(f"[red]Немає результатів пошуку для запиту: {query}[/red]")
 
     def edit_note(self, note_index, text, tags):
         # Редагування нотатки
@@ -198,6 +268,16 @@ class PersonalAssistant:
             console.print("[green]Для виведення списку контактів використайте команду list_contacts.[/green]")
         elif "пошук контактів" in normalized_input:
             console.print("[green]Ви можете використовувати команду search_contacts для пошуку контактів.[/green]")
+        elif "дн" in normalized_input:
+            console.print("[green]Ви можете використовувати команду search_contacts для пошуку контактів.[/green]")
+        elif "додати нотатку" in normalized_input:
+            console.print("[green]Ви можете використовувати команду search_contacts для пошуку контактів.[/green]")
+        elif "список нотаток" in normalized_input:
+            console.print("[green]Ви можете використовувати команду search_contacts для пошуку контактів.[/green]")
+        elif "редагувати нотатку" in normalized_input:
+            console.print("[green]Ви можете використовувати команду search_contacts для пошуку контактів.[/green]")
+        elif "сортувати нотатки" in normalized_input:
+            console.print("[green]Ви можете використовувати команду search_contacts для пошуку контактів.[/green]")   
         else:
             console.print("[red]Не можу розпізнати вашу команду. Спробуйте ще раз.[/red]")
 
@@ -216,6 +296,21 @@ while True:
         assistant.search_contacts()
     elif "дні народження" in user_input.lower():
         assistant.upcoming_birthdays(7)
+    elif "пошук нотаток" in user_input.lower():
+        query = input("Введіть запит для пошуку нотаток: ")
+        assistant.search_notes(query)
+    elif "додати нотатку" in user_input.lower():
+        assistant.add_notes_from_console()
+    elif "видалити нотатку" in user_input.lower():
+        assistant.delete_note_note()
+    elif "список нотаток" in user_input.lower():
+        assistant.list_notes()    
+    elif "редагувати нотатку" in user_input.lower():
+        assistant.edit_note()
+    elif "сортувати нотатки" in user_input.lower():
+        assistant.sort_notes_by_tags() 
+      
     else:
         console.print("[red]Не можу розпізнати вашу команду. Спробуйте ще раз.[/red]") 
-      
+    #додати нотатку', 'пошук нотаток', 'видалити нотатку', 'список нотаток', 
+    #'редагувати нотатку', 'сортувати нотатки'
