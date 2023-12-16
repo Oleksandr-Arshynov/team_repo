@@ -175,8 +175,13 @@ class PersonalAssistant:
         pass
 
     def edit_note(self, note_index, text, tags):
-        # Редагування нотатки
-        pass
+        if 0 <= note_index < len(self.notes):
+            # Оновлення нотатки із зазначеним індексом
+            self.notes[note_index].text = text
+            self.notes[note_index].tags = tags
+            console.print(f"[green]Нотатка {note_index} успішно відредагована.[/green]")
+        else:
+            console.print("[bold red]Помилка:[/bold red] Невірний індекс нотатки.")
 
     def delete_note(self, note_index):
         # Видалення нотатки
