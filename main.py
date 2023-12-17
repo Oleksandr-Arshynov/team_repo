@@ -315,23 +315,9 @@ class PersonalAssistant:
         else:
             console.print("[red]Помилка: Контакт не знайдено або не вибрано для видалення.[/red]")
 
-        # def delete_contact(self, contact_index):
-        # if contact_index < len(self.contacts):
-        #     deleted_contact = self.contacts.pop(contact_index)
-        #     console.print(f"[green]Контакт {deleted_contact['name']} успішно видалено.[/green]")
-        # else:
-        #     console.print("[red]Error: Контакт з таким індексом не існує.[/red]")
         
     def add_note(self, text, tags):
-        # Додавання нової нотатки
-        formatted_tags = [tag.strip() if tag.startswith('#') else f"#{tag.strip()}" for tag in tags]
-        new_note = Note(text, tags=formatted_tags)
-        self.notes.append(new_note)
-        console.print(f"[green]Нотатка успішно додана.[/green]")
-        
-    def add_notes_from_console(self):
         console.print("[bold]Додавання нових нотаток:[/bold]")
-
         while True:
             text = input("Текст нотатки (або введіть [/red]'закінчити'[/red] чи  [/red]'вийти'[/red] для завершення): ")
             
@@ -339,7 +325,11 @@ class PersonalAssistant:
                 break
 
             tags = input("Теги (розділіть їх комою): ").split(',')
-            self.add_note(text, tags)
+             # Додавання нової нотатки
+            formatted_tags = [tag.strip() if tag.startswith('#') else f"#{tag.strip()}" for tag in tags]
+            new_note = Note(text, tags=formatted_tags)
+            self.notes.append(new_note)
+            console.print(f"[green]Нотатка успішно додана.[/green]")
 
     def list_notes(self):
             # Виведення списку нотаток
@@ -362,19 +352,33 @@ class PersonalAssistant:
         console.print(table, justify="center")
         console.print(f"[green]Кількість існуючих нотаток: {len(self.notes)}[/green]")
 
-    def search_notes(self, query):
-        # Пошук нотаток за запитом
-        matching_notes = [note for note in self.notes if
-                          query.lower() in note.text.lower() or
-                          query.lower() in note.title.lower() or
-                          query.lower() in [tag.lower() for tag in note.tags]]
+    def search_notes(self, text_query=None, tag_query=None):
+
+        specify_query = input("Для пошуку за текстом введіть слово 'текст'.\nДля пошуку за тегом введіть слово 'тег'.\n")
+        if specify_query == 'текст':
+            text_query = input("Введіть текст для пошуку: ")
+        elif specify_query == 'тег':
+            tag_query = input("Введіть тег для пошуку: ")
+
+        matching_notes = []
+        # searching by text
+        if text_query is not None:
+            matching_notes_text = [note for note in self.notes if text_query.lower() in note.text.lower()]
+            matching_notes.extend(matching_notes_text)
+        # searching by tag
+        if tag_query is not None:
+            matching_notes_tag = [note for note in self.notes if any(tag_query.lower() in tag.lower() for tag in note.tags)]
+            matching_notes.extend(matching_notes_tag)
 
         if matching_notes:
             console.print(f"[bold green]Результати пошуку:[/bold green]")
             for note in matching_notes:
                 console.print(note.text)
         else:
-            console.print(f"[red]Немає результатів пошуку для запиту: {query}[/red]")
+            if text_query is None:
+                console.print(f"[red]Немає результатів пошуку за тегом: '{tag_query}'[/red]")
+            if tag_query is None:
+                console.print(f"[red]Немає результатів пошуку за текстом: '{text_query}'[/red]")
 
     def edit_note(self, note_index):
         if 0 <= note_index < len(self.notes):
@@ -428,7 +432,31 @@ class PersonalAssistant:
 
     def sort_notes_by_tags(self):
         # Сортування нотаток за тегами
-        pass
+        if not self.notes:
+            console.print("Немає нотаток для сортування.")
+            return
+        # створюємо словник для нотаток за тегами
+        notes_by_tag_dict = {}   # key is a tag and note is a value
+        for note in self.notes:
+            for tag in note.tags:
+                if tag not in notes_by_tag_dict:
+                    notes_by_tag_dict[tag] = []
+                # додаємо нотатку до списку за ключем(тегом)
+                notes_by_tag_dict[tag].append(note)
+
+        sorted_tags = sorted(notes_by_tag_dict.keys())
+
+        # відображення нотаток
+        table = Table(title="Сортування нотаток за тегами")
+        table.add_column("[red]Тег[/red]")
+        table.add_column("[green]Текст[/green]")
+
+        for tag in sorted_tags:     # Iterate over the sorted tags and, for each tag, retrieve the list of notes associated with that tag.
+            tag_notes = notes_by_tag_dict[tag]
+            for note in tag_notes:
+                table.add_row(Text(tag, style="red"), Text(note.text, style="green"))
+
+        console.print(table)
 
     def categorize_files(self, folder_path):
         # Сортування файлів у зазначеній папці за категоріями
@@ -520,10 +548,9 @@ class PersonalAssistant:
             elif "дні народження" in user_input.lower():
                 assistant.upcoming_birthdays(7)
             elif "пошук нотаток" in user_input.lower():
-                query = input("Введіть запит для пошуку нотаток: ")
-                assistant.search_notes(query)
+                assistant.search_notes()
             elif "додати нотатку" in user_input.lower():
-                assistant.add_notes_from_console()
+                assistant.add_note()
             elif "видалити нотатку" in user_input.lower():
                 assistant.delete_note()
             elif "список нотаток" in user_input.lower():
