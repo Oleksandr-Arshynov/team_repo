@@ -22,20 +22,17 @@
 
 1. Клонуйте репозиторій:
 
-   ```bash
    git clone https://github.com/Oleksandr-Arshynov/team_repo.git
    cd team_repo
 
 **Встановіть залежності**:
 
-bash
 pip install -r requirements.txt
 
 **Використання**
 Запустіть програму за допомогою наступної команди:
 
-bash
-python main.py
+python assistant.py
 
 Використовуйте надані команди для взаємодії з особистим асистентом.
 
