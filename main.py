@@ -70,7 +70,6 @@ class PersonalAssistant:
         self.add_contact(name, address, phone, email, birthday_date)
 
 
-
     def add_contact(self, name, address, phone, email, birthday):
         # Перевірка правильності формату кожного номера телефону
     
@@ -94,8 +93,7 @@ class PersonalAssistant:
         self.contacts.append(new_contact)
         console.print(f"[green]Контакт {name} успішно доданий до книги контактів.[/green]")
 
-
-                
+            
     def list_contacts(self):
         
         # Виведення списку контактів
@@ -158,6 +156,7 @@ class PersonalAssistant:
             print("Контакти успішно завантажені.")
         else:
             print("Не вдалося завантажити контакти або файл порожній.")
+     
             
     def dump_notes(self):
         with open('notes.csv', 'w', newline='\n') as fh:
@@ -166,6 +165,7 @@ class PersonalAssistant:
             writer.writeheader()
             for note in self.notes:
                 writer.writerow({'text': note.text, 'tags': ', '.join(note.tags)})
+
 
     def load_notes(self):
         with open('notes.csv', newline='\n') as fh:
@@ -181,6 +181,7 @@ class PersonalAssistant:
             print("Нотатки успішно завантажені.")
         else:
             print("Не вдалося завантажити нотатки або файл порожній.") 
+     
                        
     def upcoming_birthdays(self, days):
         today = datetime.today().date()
@@ -226,6 +227,7 @@ class PersonalAssistant:
 
         return next_birthday
 
+
     def search_contacts(self, query=None):
         if query is None:
             query = input("Введіть запит для пошуку контактів: ")
@@ -260,6 +262,7 @@ class PersonalAssistant:
         else:
             console.print(f"[red]Немає результатів пошуку для запиту: {query}[/red]")
             return None
+
 
     def edit_contact(self, contact):
         if contact is None:
@@ -331,6 +334,7 @@ class PersonalAssistant:
             self.notes.append(new_note)
             console.print(f"[green]Нотатка успішно додана.[/green]")
 
+
     def list_notes(self):
             # Виведення списку нотаток
         if not self.notes:
@@ -351,6 +355,7 @@ class PersonalAssistant:
 
         console.print(table, justify="center")
         console.print(f"[green]Кількість існуючих нотаток: {len(self.notes)}[/green]")
+
 
     def search_notes(self, text_query=None, tag_query=None):
 
@@ -379,6 +384,7 @@ class PersonalAssistant:
                 console.print(f"[red]Немає результатів пошуку за тегом: '{tag_query}'[/red]")
             if tag_query is None:
                 console.print(f"[red]Немає результатів пошуку за текстом: '{text_query}'[/red]")
+
 
     def edit_note(self, note_index):
         if 0 <= note_index < len(self.notes):
