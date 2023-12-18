@@ -467,7 +467,7 @@ class PersonalAssistant:
             for note in tag_notes:
                 table.add_row(Text(tag, style="red"), Text(note.text, style="green"))
 
-        console.print(table)
+        console.print(table, justify='center')
 
     def categorize_files(self, folder_path):
         # Сортування файлів у зазначеній папці за категоріями

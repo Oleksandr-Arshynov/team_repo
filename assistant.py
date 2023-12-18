@@ -9,6 +9,7 @@ from rich.text import Text
 from dateutil import parser
 from rich.live import Live
 import csv
+import sorter
 
 console = Console()
 
@@ -147,7 +148,7 @@ class PersonalAssistant:
                 )
 
             # Встановлення відстані від верхнього краю екрану
-            console.print("\n" * 10)
+            console.print("\n" * 2)
             console.print(table, justify="center")
 
 
@@ -162,7 +163,7 @@ class PersonalAssistant:
             writer.writeheader()
             for contact in self.contacts:
                 writer.writerow({'name': contact.name, 'address': contact.address,
-                                'phone': contact.phone, 'email': contact.email, 'birthday': contact.birthday})
+                                'phone': contact.phone, 'email': contact.email, 'birthday': contact.birthday.strftime('%d-%m-%Y')})
 
     def load(self):
         """
@@ -251,7 +252,7 @@ class PersonalAssistant:
                 Text(str(age), style="green")
                 )
             # Встановлення відстані від верхнього краю екрану
-            console.print("\n" * 10)
+            console.print("\n" * 2)
             console.print(table, justify="center")
             
             
@@ -356,7 +357,7 @@ class PersonalAssistant:
                 console.print("[bold red]Помилка:[/bold red] Некоректна електронна пошта.")
 
         # Редагування дня народження
-        new_birthday = input(f"Теперішній день народження: {contact.birthday}\nВведіть новий день народження (або Enter, щоб залишити без змін): ")
+        new_birthday = input(f"Теперішній день народження: {contact.birthday.strftime('%d-%m-%Y')}\nВведіть новий день народження (або Enter, щоб залишити без змін): ")
         if new_birthday:
             contact.birthday = new_birthday
 
@@ -390,7 +391,7 @@ class PersonalAssistant:
             tags (list, optional): Список тегів для нотатки. За замовчуванням - None.
         """
 
-        console.print("[bold]Додавання нових нотаток:[/bold]")
+        
         while True:
             text = input("Текст нотатки (або введіть 'закінчити' чи 'вийти' для завершення): ")
             
@@ -419,7 +420,7 @@ class PersonalAssistant:
         table.add_column("[blue]Текст[/blue]")
         table.add_column("[cyan]Теги[/cyan]")
 
-        for i, note in enumerate(self.notes, start=1):
+        for i, note in enumerate(self.notes, start=0):
             table.add_row(
                 Text(str(i), style="blue"),
                 Text(note.text, style="blue"),
@@ -430,6 +431,7 @@ class PersonalAssistant:
         console.print(f"[green]Кількість існуючих нотаток: {len(self.notes)}[/green]")
 
 
+        
     def search_notes(self, text_query=None, tag_query=None):
         """
         Пошук нотаток за текстом або тегом.
@@ -437,32 +439,45 @@ class PersonalAssistant:
             text_query (str, optional): Текст для пошуку в нотатках. За замовчуванням - None.
             tag_query (str, optional): Тег для пошуку в нотатках. За замовчуванням - None.
         """
-        specify_query = input("Для пошуку за текстом введіть слово 'текст'.\nДля пошуку за тегом введіть слово 'тег'.\n")
+        specify_query = input(
+            "Введіть слово 'текст' для пошуку за текстом або введіть слово 'тег' для пошуку за тегом: ")
         if specify_query == 'текст':
             text_query = input("Введіть текст для пошуку: ")
         elif specify_query == 'тег':
             tag_query = input("Введіть тег для пошуку: ")
 
         matching_notes = []
-        # searching by text
         if text_query is not None:
             matching_notes_text = [note for note in self.notes if text_query.lower() in note.text.lower()]
             matching_notes.extend(matching_notes_text)
-        # searching by tag
         if tag_query is not None:
-            matching_notes_tag = [note for note in self.notes if any(tag_query.lower() in tag.lower() for tag in note.tags)]
+            matching_notes_tag = [note for note in self.notes if
+                                  any(tag_query.lower() in tag.lower() for tag in note.tags)]
             matching_notes.extend(matching_notes_tag)
 
         if matching_notes:
             console.print(f"[bold green]Результати пошуку:[/bold green]")
-            for note in matching_notes:
-                console.print(note.text)
+
+            # Виведення знайдених нотаток в таблицю
+            table = Table(title="Знайдені нотатки")
+            table.add_column("[cyan]Номер[/cyan]")
+            table.add_column("[blue]Нотатка[/blue]")
+            table.add_column("[green]Теги[/green]")
+
+            for i, note in enumerate(matching_notes, start=0):
+                table.add_row(
+                    Text(str(i), style='cyan'),
+                    Text(note.text, style='blue'),
+                    Text(", ".join(note.tags), style='green')
+                )
+
+            console.print(table, justify='center')
+
         else:
             if text_query is None:
                 console.print(f"[red]Немає результатів пошуку за тегом: '{tag_query}'[/red]")
             if tag_query is None:
                 console.print(f"[red]Немає результатів пошуку за текстом: '{text_query}'[/red]")
-
 
     def edit_note(self, note_index):
         """
@@ -479,8 +494,8 @@ class PersonalAssistant:
             note_to_edit.text = new_text
 
             # Редагування тегів нотатки
-            new_tags = input("Введіть нові теги нотатки (через кому): ")
-            note_to_edit.tags = [tag.strip() for tag in new_tags.split(',')]
+            new_tags = input("Введіть нові теги нотатки (через кому): ").split(",")
+            note_to_edit.tags = [tag.strip() if tag.startswith('#') else f"#{tag.strip()}" for tag in new_tags]
 
             console.print(f"[green]Нотатка {note_index} успішно відредагована.[/green]")
         else:
@@ -501,7 +516,7 @@ class PersonalAssistant:
 
         if matching_notes:
             console.print(f"[bold green]Результати пошуку:[/bold green]")
-            for index, note in enumerate(matching_notes, start=1):
+            for index, note in enumerate(matching_notes, start=0):
                 console.print(f"{index}. {note.text}")
 
             # Отримання від користувача індексу нотатки для видалення
@@ -565,29 +580,32 @@ class PersonalAssistant:
         if "додати контакт" in normalized_input:
             console.print("[green]Пропоную вам додати новий контакт.[/green]")
         elif "список контактів" in normalized_input:
-            console.print("[green]Для виведення списку контактів використайте команду список контактів.[/green]")
+            console.print("[green]Ваш список контактів.[/green]")
         elif "пошук контактів" in normalized_input:
-            console.print("[green]Ви можете використовувати команду пошук контактів для пошуку контактів.[/green]")
+            console.print("[green]Для пошуку контактів введіть ім'я.[/green]")
         elif "дні народження" in normalized_input:
-            console.print("[green]Ви можете використовувати команду дні народження для пошуку контактів у яких буде день народження.[/green]")
+            console.print("[green]Перегляньте список контактів у кого День народження впродовж наступного тижня.[/green]")
         elif "редагувати контакт" in normalized_input:
             console.print("[green]Для редагування контакту.[/green]")    
         elif "видалити контакт" in normalized_input:
-            console.print("[green]Для видалення контакту використайте команду видалити контакт.[/green]")           
+            console.print("[green]Для видалення контакту.[/green]")           
         elif "додати нотатку" in normalized_input:
-            console.print("[green]Ви можете використовувати команду додати нотатку для додавання нотаток.[/green]")
+            console.print("[green]Додавання нових нотаток:[/green]")
+        elif "пошук нотаток" in normalized_input:
+            console.print("[green]Для пошуку нотаток: [/green]")
         elif "список нотаток" in normalized_input:
-            console.print("[green]Для виведення списку нотаток використайте команду список нотаток.[/green]")
+            console.print("[green]Ваш список нотаток.[/green]")
         elif "редагувати нотатку" in normalized_input:
-            console.print("[green]Для редагування нотатки використайте команду редагувати нотатку.[/green]")
+            console.print("[green]Для редагування нотатки:[/green]")
         elif "сортувати нотатки" in normalized_input:
-            console.print("[green]Для сортування нотаток використайте команду сортувати нотатки.[/green]")
-        elif "пошук нотатки" in normalized_input:
-            console.print("[green]Для пошуку нотатки використайте команду сортувати нотатки.[/green]")
+            console.print("[green]Відсортовані нотатки: [/green]")
         elif "вихід" in normalized_input:
             console.print("[green]До нових зустрічей![/green]") 
+        elif "допомога" in normalized_input:
+            pass
         else:
-            console.print("[red]Не можу розпізнати вашу команду. Спробуйте ще раз.[/red]")
+            console.print("[red]Не можу розпізнати вашу команду. Пропоную Вам список доступних команд.[/red]")
+            self.display_commands_table()
             
     def display_commands_table(self):
         """Створює таблицю зі списком доступних команд і виводить її в консолі"""
@@ -672,3 +690,7 @@ if __name__ == "__main__":
     assistant.load()
     assistant.load_notes()
     assistant.run()
+    
+    
+    
+    
