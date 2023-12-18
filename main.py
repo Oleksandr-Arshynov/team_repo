@@ -39,6 +39,13 @@ class PersonalAssistant:
         self.command_completer = WordCompleter(self.commands)
 
     def is_valid_phone(self, phone):
+        """
+        Перевіряє, чи відповідає формат номера телефону встановленим правилам.
+        Args:
+            phone (str): Номер телефону для перевірки.
+        Returns:
+            bool: True, якщо номер телефону відповідає формату, False - інакше.
+        """
         # Перевірка правильності формату номера телефону
         # Допустимі формати: +380501234567, 050-123-45-67, 0501234567, (050)123-45-67, 0989898989
         phone_pattern = re.compile(r'^\+?\d{1,3}?[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}$')
@@ -46,11 +53,21 @@ class PersonalAssistant:
 
 
     def is_valid_email(self, email):
+        """
+        Перевіряє, чи відповідає формат електронної пошти встановленим правилам.
+        Args:
+            email (str): Адреса електронної пошти для перевірки.
+        Returns:
+            bool: True, якщо адреса електронної пошти відповідає формату, False - інакше.
+        """
         # Перевірка правильності формату електронної пошти
         email_pattern = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
         return bool(re.match(email_pattern, email))
 
     def add_contact_from_console(self):
+        """
+        Забезпечує введення даних нового контакту з консолі та додає його до книги контактів.
+        """
         console.print("[bold]Додавання нового контакту:[/bold]")
 
         name = input("Ім'я: ")
@@ -71,6 +88,17 @@ class PersonalAssistant:
 
 
     def add_contact(self, name, address, phone, email, birthday):
+        """
+        Додає новий контакт до книги контактів після перевірки правильності введених даних.
+        Args:
+            name (str): Ім'я контакту.
+            address (str): Адреса контакту.
+            phone (str): Номер телефону контакту.
+            email (str): Адреса електронної пошти контакту.
+            birthday (datetime.date): День народження контакту.
+        Returns:
+            None
+        """
         # Перевірка правильності формату кожного номера телефону
     
         if not self.is_valid_phone(phone):
@@ -95,8 +123,9 @@ class PersonalAssistant:
 
             
     def list_contacts(self):
-        
-        # Виведення списку контактів
+        """
+        Виводить список контактів у вигляді таблиці.
+        """
         if not self.contacts:
             console.print("[red]У вас немає жодних контактів в книзі.[/red]")
         else:
@@ -108,10 +137,7 @@ class PersonalAssistant:
             table.add_column("[magenta]День народження[/magenta]")
 
             for contact in self.contacts:
-                # Перетворення дати народження в рядок
-                birthday_str = contact.birthday.strptime('%d-%m-%Y').date()
-
-
+                birthday_str = contact.birthday.strftime('%d-%m-%Y')
                 table.add_row(
                     Text(contact.name, style="blue"),
                     Text(contact.address, style="green"),
@@ -127,6 +153,9 @@ class PersonalAssistant:
 
 
     def dump(self):
+        """
+        Зберігає книгу контактів у файл CSV.
+        """
         with open('addressbook.csv', 'w', newline='\n') as fh:
             field_names = ['name', 'address', 'phone', 'email', 'birthday']
             writer = csv.DictWriter(fh, fieldnames=field_names)
@@ -136,6 +165,9 @@ class PersonalAssistant:
                                 'phone': contact.phone, 'email': contact.email, 'birthday': contact.birthday})
 
     def load(self):
+        """
+        Завантажує книгу контактів з файлу CSV.
+        """
         with open('addressbook.csv', newline='\n') as fh:
             reader = csv.DictReader(fh)
             for row in reader:
@@ -146,8 +178,8 @@ class PersonalAssistant:
                 
                 # Перетворення рядка дати у об'єкт datetime.date
                 birthday_str = row['birthday']
-                birthday = datetime.strptime(birthday_str, '%Y-%m-%d').date()
-                
+                birthday = datetime.strptime(birthday_str, '%d-%m-%Y').date()
+
                 new_contact = Contact(
                     name, address, phone, email, birthday)
                 self.contacts.append(new_contact)
@@ -159,6 +191,9 @@ class PersonalAssistant:
      
             
     def dump_notes(self):
+        """
+        Зберігає нотатки у файл CSV.
+        """
         with open('notes.csv', 'w', newline='\n') as fh:
             field_names = ['text', 'tags']
             writer = csv.DictWriter(fh, fieldnames=field_names)
@@ -168,6 +203,9 @@ class PersonalAssistant:
 
 
     def load_notes(self):
+        """
+        Завантажує нотатки з файлу CSV.
+        """
         with open('notes.csv', newline='\n') as fh:
             reader = csv.DictReader(fh)
             for row in reader:
@@ -184,6 +222,11 @@ class PersonalAssistant:
      
                        
     def upcoming_birthdays(self, days):
+        """
+        Виводить інформацію про найближчі дні народження у наступні визначені дні.
+        Args:
+            days (int): Кількість днів для виводу інформації про найближчі дні народження.
+        """
         today = datetime.today().date()
         upcoming_birthdays = [contact for contact in self.contacts if today < self.get_next_birthday(contact) <= today + timedelta(days)]
         if not upcoming_birthdays:
@@ -213,6 +256,13 @@ class PersonalAssistant:
             
             
     def get_next_birthday(self, contact):
+        """
+        Отримує дату наступного дня народження для вказаного контакту.
+        Args:
+            contact (Contact): Контакт, для якого потрібно отримати наступний день народження.
+        Returns:
+            datetime.date: Дата наступного дня народження.
+        """
         today = datetime.today().date()
 
         # Перевірка, чи birthday є рядком, і якщо так, конвертувати його у datetime.date
@@ -229,6 +279,14 @@ class PersonalAssistant:
 
 
     def search_contacts(self, query=None):
+        """
+        Шукає контакти, які відповідають введеному запиту.
+        Args:
+            query (str, optional): Запит для пошуку контактів. За замовчуванням - None.
+        Returns:
+            Contact or None: Знайдений контакт або None, якщо нічого не знайдено.
+        """
+
         if query is None:
             query = input("Введіть запит для пошуку контактів: ")
 
@@ -307,6 +365,11 @@ class PersonalAssistant:
 
     # Видалення контакту
     def delete_contact(self, contact=None):
+        """
+        Видаляє вказаний контакт або викликає search_contacts для вибору контакту.
+        Args:
+            contact (Contact, optional): Контакт для видалення. За замовчуванням - None.
+        """
         if contact is None:
             # Якщо contact не передано, спробуйте викликати search_contacts для вибору контакту
             contact = self.search_contacts()
@@ -319,10 +382,17 @@ class PersonalAssistant:
             console.print("[red]Помилка: Контакт не знайдено або не вибрано для видалення.[/red]")
 
         
-    def add_note(self, text, tags):
+    def add_note(self, text=None, tags=None):
+        """
+        Додає нові нотатки.
+        Args:
+            text (str, optional): Текст нотатки. За замовчуванням - None.
+            tags (list, optional): Список тегів для нотатки. За замовчуванням - None.
+        """
+
         console.print("[bold]Додавання нових нотаток:[/bold]")
         while True:
-            text = input("Текст нотатки (або введіть [/red]'закінчити'[/red] чи  [/red]'вийти'[/red] для завершення): ")
+            text = input("Текст нотатки (або введіть 'закінчити' чи 'вийти' для завершення): ")
             
             if text.lower() == 'закінчити' or text.lower() == 'вийти':
                 break
@@ -336,6 +406,9 @@ class PersonalAssistant:
 
 
     def list_notes(self):
+        """
+        Виводить список існуючих нотаток.
+        """
             # Виведення списку нотаток
         if not self.notes:
             console.print("[red]У вас немає жодних нотаток.[/red]")
@@ -358,7 +431,12 @@ class PersonalAssistant:
 
 
     def search_notes(self, text_query=None, tag_query=None):
-
+        """
+        Пошук нотаток за текстом або тегом.
+        Args:
+            text_query (str, optional): Текст для пошуку в нотатках. За замовчуванням - None.
+            tag_query (str, optional): Тег для пошуку в нотатках. За замовчуванням - None.
+        """
         specify_query = input("Для пошуку за текстом введіть слово 'текст'.\nДля пошуку за тегом введіть слово 'тег'.\n")
         if specify_query == 'текст':
             text_query = input("Введіть текст для пошуку: ")
@@ -387,6 +465,11 @@ class PersonalAssistant:
 
 
     def edit_note(self, note_index):
+        """
+        Редагує існуючу нотатку за індексом.
+        Args:
+            note_index (int): Індекс нотатки для редагування.
+        """
         if 0 <= note_index < len(self.notes):
             # Отримання нотатки за індексом
             note_to_edit = self.notes[note_index]
@@ -405,6 +488,11 @@ class PersonalAssistant:
 
     
     def delete_note(self):
+        """
+        Видаляє нотатку користувача за текстом, назвою або тегом.
+        Користувач вводить запит для пошуку нотаток. Знайдені нотатки виводяться, і користувач може
+        обрати конкретну нотатку для видалення. Видалена нотатка видаляється зі списку нотаток.
+        """
         # Отримання запиту від користувача або використання дефолтного значення
         query = console.input("Введіть текст, назву або тег для пошуку: ")
 
@@ -437,12 +525,16 @@ class PersonalAssistant:
 
 
     def sort_notes_by_tags(self):
+        """
+        Сортує нотатки за тегами та виводить результат у вигляді табличного вигляду.
+        Якщо немає жодних нотаток, виводить повідомлення про відсутність нотаток.
+        """
         # Сортування нотаток за тегами
         if not self.notes:
             console.print("Немає нотаток для сортування.")
             return
         # створюємо словник для нотаток за тегами
-        notes_by_tag_dict = {}   # key is a tag and note is a value
+        notes_by_tag_dict = {}  
         for note in self.notes:
             for tag in note.tags:
                 if tag not in notes_by_tag_dict:
@@ -457,7 +549,7 @@ class PersonalAssistant:
         table.add_column("[red]Тег[/red]")
         table.add_column("[green]Текст[/green]")
 
-        for tag in sorted_tags:     # Iterate over the sorted tags and, for each tag, retrieve the list of notes associated with that tag.
+        for tag in sorted_tags:
             tag_notes = notes_by_tag_dict[tag]
             for note in tag_notes:
                 table.add_row(Text(tag, style="red"), Text(note.text, style="green"))
@@ -479,7 +571,7 @@ class PersonalAssistant:
         elif "дні народження" in normalized_input:
             console.print("[green]Ви можете використовувати команду дні народження для пошуку контактів у яких буде день народження.[/green]")
         elif "редагувати контакт" in normalized_input:
-            console.print("[green]Для редагування контакту використайте команду редагувати контакт.[/green]")    
+            console.print("[green]Для редагування контакту.[/green]")    
         elif "видалити контакт" in normalized_input:
             console.print("[green]Для видалення контакту використайте команду видалити контакт.[/green]")           
         elif "додати нотатку" in normalized_input:
@@ -489,7 +581,9 @@ class PersonalAssistant:
         elif "редагувати нотатку" in normalized_input:
             console.print("[green]Для редагування нотатки використайте команду редагувати нотатку.[/green]")
         elif "сортувати нотатки" in normalized_input:
-            console.print("[green]Для сортування нотаток використайте команду сортувати нотатки.[/green]")  
+            console.print("[green]Для сортування нотаток використайте команду сортувати нотатки.[/green]")
+        elif "пошук нотатки" in normalized_input:
+            console.print("[green]Для пошуку нотатки використайте команду сортувати нотатки.[/green]")
         elif "вихід" in normalized_input:
             console.print("[green]До нових зустрічей![/green]") 
         else:
