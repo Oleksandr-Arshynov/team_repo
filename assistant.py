@@ -667,8 +667,6 @@ class PersonalAssistant:
                 assistant.dump_notes()
                 break
         
-
-
 if __name__ == "__main__":
     assistant = PersonalAssistant()
     assistant.load()
