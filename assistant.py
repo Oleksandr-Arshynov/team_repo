@@ -9,8 +9,9 @@ from rich.text import Text
 from dateutil import parser
 from rich.live import Live
 import csv
+import os
+import shutil
 import sorter
-
 console = Console()
 
 class Contact:
@@ -32,7 +33,7 @@ class PersonalAssistant:
         self.contacts = []
         self.notes = []
         self.commands = ['додати контакт', 'список контактів', 'пошук контактів', 'дні народження', 
-                         'редагувати контакт', 'видалити контакт',
+                         'редагувати контакт', 'видалити контакт', 'сортувати файли',
                          'додати нотатку', 'пошук нотаток', 'видалити нотатку', 'список нотаток', 
                          'редагувати нотатку', 'сортувати нотатки', 'допомога', 'вихід']
 
@@ -571,9 +572,46 @@ class PersonalAssistant:
 
         console.print(table)
 
-    def categorize_files(self, folder_path):
-        # Сортування файлів у зазначеній папці за категоріями
-        pass
+    def categorize_files(self, input_folder, output_folder):
+        # Створюємо словник для кожної категорії
+        categories = {
+            'Images': ['.jpg', '.jpeg', '.png', '.gif'],
+            'Documents': ['.doc', '.docx', '.pdf', '.txt'],
+            'Videos': ['.mp4', '.avi', '.mkv', '.mov'],
+            'Others': []  # Інші файли
+        }
+
+        # Рекурсивно проходимо всі файли та папки у вхідній папці
+        for root, dirs, files in os.walk(input_folder):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+
+                # Ігноруємо папки
+                if os.path.isdir(file_path):
+                    continue
+
+                # Визначаємо категорію файлу
+                category = None
+                for cat, extensions in categories.items():
+                    if any(filename.lower().endswith(ext) for ext in extensions):
+                        category = cat
+                        break
+
+                # Якщо категорія не визначена, викладаємо файл в Others
+                if category is None:
+                    category = 'Others'
+
+                # Створюємо вихідну папку для категорії, якщо вона не існує
+                category_folder = os.path.join(output_folder, category)
+                os.makedirs(category_folder, exist_ok=True)
+
+                # Копіюємо файл у відповідну категорію
+                destination_path = os.path.join(category_folder, filename)
+                shutil.copy(file_path, destination_path)
+
+                print(f"Copied {file_path} to {destination_path}")
+
+
 
     def analyze_user_input(self, user_input):
         normalized_input = user_input.lower()
@@ -599,6 +637,8 @@ class PersonalAssistant:
             console.print("[green]Для редагування нотатки:[/green]")
         elif "сортувати нотатки" in normalized_input:
             console.print("[green]Відсортовані нотатки: [/green]")
+        elif "сортувати файли" in normalized_input:
+            console.print("[green]Відсортовані файли знаходяться в папапці: [/green]")
         elif "вихід" in normalized_input:
             console.print("[green]До нових зустрічей![/green]") 
         elif "допомога" in normalized_input:
@@ -679,7 +719,8 @@ class PersonalAssistant:
                     assistant.edit_note(note_index)
             elif "сортувати нотатки" in user_input.lower():
                 assistant.sort_notes_by_tags() 
-            
+            elif "сортувати папку" in user_input.lower():
+                assistant.categorize_files() 
             elif "вихід" in user_input.lower():
                 assistant.dump()
                 assistant.dump_notes()
@@ -690,7 +731,10 @@ if __name__ == "__main__":
     assistant.load()
     assistant.load_notes()
     assistant.run()
-    
-    
-    
-    
+    # Вхідна та вихідна папки
+    input_folder = r'/Users/oleksandrarshinov/Desktop/Documents/team_project_repo/team_repo/Garbage'
+    output_folder = r'/Users/oleksandrarshinov/Desktop/Documents/team_project_repo/team_repo/folder'
+
+    # Виклик функції сортування
+    assistant.categorize_files(input_folder, output_folder)
+    sorter.main(input_folder)
