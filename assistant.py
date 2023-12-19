@@ -9,9 +9,8 @@ from rich.text import Text
 from dateutil import parser
 from rich.live import Live
 import csv
-import os
 import shutil
-
+import os
 import sys
 from pathlib import Path
 
@@ -34,6 +33,7 @@ class Note:
 
 class FolderOrganizer:
     def __init__(self, folder_path=None):
+        
         self.CYRILLIC_SYMBOLS = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяєіїґ'
         self.TRANSLATION = ("a", "b", "v", "g", "d", "e", "e", "j", "z", "i", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u",
                            "f", "h", "ts", "ch", "sh", "sch", "", "y", "", "e", "yu", "u", "ja", "je", "ji", "g")
@@ -86,17 +86,6 @@ class FolderOrganizer:
         for item in self.folder_path.iterdir():
             if item.is_file():
                 self.handle_file(item, self.folder_path)
-
-if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        organizer = FolderOrganizer()
-    elif len(sys.argv) == 2:
-        organizer = FolderOrganizer(sys.argv[1])
-    else:
-        print("Використання: python script.py [шлях_до_папки]")
-        sys.exit(1)
-
-    organizer.organize_folder()
 
 class PersonalAssistant:
     def __init__(self):
@@ -669,7 +658,7 @@ class PersonalAssistant:
         elif "сортувати нотатки" in normalized_input:
             console.print("[green]Відсортовані нотатки: [/green]")
         elif "сортувати файли" in normalized_input:
-            console.print("[green]Відсортовані файли знаходяться в папапці: [/green]")
+            console.print("[green]Відсортовані файли знаходяться в папці: [/green]")
         elif "вихід" in normalized_input:
             console.print("[green]До нових зустрічей![/green]") 
         elif "допомога" in normalized_input:
@@ -750,19 +739,26 @@ class PersonalAssistant:
                     assistant.edit_note(note_index)
             elif "сортувати нотатки" in user_input.lower():
                 assistant.sort_notes_by_tags() 
-            elif "сортувати папку" in user_input.lower():
-                sorter
+            elif "сортувати файли" in user_input.lower():
+                local_path = input("Введіть назву папки для сортування: ")
+                sorter.organize_folder(local_path)
             elif "вихід" in user_input.lower():
                 assistant.dump()
                 assistant.dump_notes()
                 break
-        
+            
+     
 if __name__ == "__main__":
     assistant = PersonalAssistant()
     assistant.load()
     assistant.load_notes()
+    sorter = FolderOrganizer() 
     assistant.run()
-    local_path = input("Введіть назву папки")
-    sorter = FolderOrganizer(local_path)
     
-    
+    if len(sys.argv) == 1:
+        organizer = FolderOrganizer()
+    elif len(sys.argv) == 2:
+        organizer = FolderOrganizer(sys.argv[1])
+    else:
+        print("Використання: python script.py [шлях_до_папки]")
+        sys.exit(1)
