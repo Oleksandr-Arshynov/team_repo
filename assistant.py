@@ -11,7 +11,10 @@ from rich.live import Live
 import csv
 import os
 import shutil
-import sorter
+
+import sys
+from pathlib import Path
+
 console = Console()
 
 class Contact:
@@ -28,6 +31,73 @@ class Note:
         self.tags = tags or []
 
 
+
+class FolderOrganizer:
+    def __init__(self, folder_path=None):
+        self.CYRILLIC_SYMBOLS = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяєіїґ'
+        self.TRANSLATION = ("a", "b", "v", "g", "d", "e", "e", "j", "z", "i", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u",
+                           "f", "h", "ts", "ch", "sh", "sch", "", "y", "", "e", "yu", "u", "ja", "je", "ji", "g")
+
+        self.TRANS = dict()
+
+        for cyrillic, latin in zip(self.CYRILLIC_SYMBOLS, self.TRANSLATION):
+            self.TRANS[ord(cyrillic)] = latin
+            self.TRANS[ord(cyrillic.upper())] = latin.upper()
+
+        self.KNOWN_EXTENSIONS = {
+            'Images': {'JPEG', 'JPG', 'PNG', 'SVG'},
+            'Video': {'AVI', 'MP4', 'MOV', 'MKV'},
+            'Documents': {'DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX'},
+            'Audio': {'MP3', 'OGG', 'WAV', 'AMR'},
+            'Archives': {'ZIP', 'GZ', 'TAR'},
+        }
+
+        if folder_path is None:
+            self.folder_path = Path("MY_OTHER").resolve()
+            print(f"Папка не вказана. Використовується поточний робочий каталог: {self.folder_path}")
+        else:
+            self.folder_path = Path(folder_path).resolve()
+
+    def normalize(self, name: str) -> str:
+        translate_name = re.sub(r'[^a-zA-Z0-9.]', '_', name.translate(self.TRANS))
+        return translate_name
+
+    def get_extension(self, name: str) -> str:
+        return Path(name).suffix[1:].upper()
+
+    def handle_file(self, file_name: Path, target_folder: Path):
+        extension = self.get_extension(file_name)
+        normalized_name = self.normalize(file_name.name)
+
+        if extension in {ext for exts in self.KNOWN_EXTENSIONS.values() for ext in exts}:
+            target_folder = target_folder / extension
+        else:
+            target_folder = target_folder / 'MY_OTHER'
+
+        target_folder.mkdir(exist_ok=True, parents=True)
+        target_path = target_folder / normalized_name
+
+        if target_path.exists():
+            target_path = target_folder / f"{normalized_name.stem}_{normalized_name.suffix}"
+
+        shutil.move(str(file_name), str(target_path))
+
+    def organize_folder(self):
+        for item in self.folder_path.iterdir():
+            if item.is_file():
+                self.handle_file(item, self.folder_path)
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        organizer = FolderOrganizer()
+    elif len(sys.argv) == 2:
+        organizer = FolderOrganizer(sys.argv[1])
+    else:
+        print("Використання: python script.py [шлях_до_папки]")
+        sys.exit(1)
+
+    organizer.organize_folder()
+
 class PersonalAssistant:
     def __init__(self):
         self.contacts = []
@@ -39,6 +109,7 @@ class PersonalAssistant:
 
         # Встановлення автодоповнення на основі доступних команд
         self.command_completer = WordCompleter(self.commands)
+        
 
     def is_valid_phone(self, phone):
         """
@@ -572,46 +643,6 @@ class PersonalAssistant:
 
         console.print(table)
 
-    def categorize_files(self, input_folder, output_folder):
-        # Створюємо словник для кожної категорії
-        categories = {
-            'Images': ['.jpg', '.jpeg', '.png', '.gif'],
-            'Documents': ['.doc', '.docx', '.pdf', '.txt'],
-            'Videos': ['.mp4', '.avi', '.mkv', '.mov'],
-            'Others': []  # Інші файли
-        }
-
-        # Рекурсивно проходимо всі файли та папки у вхідній папці
-        for root, dirs, files in os.walk(input_folder):
-            for filename in files:
-                file_path = os.path.join(root, filename)
-
-                # Ігноруємо папки
-                if os.path.isdir(file_path):
-                    continue
-
-                # Визначаємо категорію файлу
-                category = None
-                for cat, extensions in categories.items():
-                    if any(filename.lower().endswith(ext) for ext in extensions):
-                        category = cat
-                        break
-
-                # Якщо категорія не визначена, викладаємо файл в Others
-                if category is None:
-                    category = 'Others'
-
-                # Створюємо вихідну папку для категорії, якщо вона не існує
-                category_folder = os.path.join(output_folder, category)
-                os.makedirs(category_folder, exist_ok=True)
-
-                # Копіюємо файл у відповідну категорію
-                destination_path = os.path.join(category_folder, filename)
-                shutil.copy(file_path, destination_path)
-
-                print(f"Copied {file_path} to {destination_path}")
-
-
 
     def analyze_user_input(self, user_input):
         normalized_input = user_input.lower()
@@ -720,7 +751,7 @@ class PersonalAssistant:
             elif "сортувати нотатки" in user_input.lower():
                 assistant.sort_notes_by_tags() 
             elif "сортувати папку" in user_input.lower():
-                assistant.categorize_files() 
+                sorter
             elif "вихід" in user_input.lower():
                 assistant.dump()
                 assistant.dump_notes()
@@ -731,10 +762,7 @@ if __name__ == "__main__":
     assistant.load()
     assistant.load_notes()
     assistant.run()
-    # Вхідна та вихідна папки
-    input_folder = r'/Users/oleksandrarshinov/Desktop/Documents/team_project_repo/team_repo/Garbage'
-    output_folder = r'/Users/oleksandrarshinov/Desktop/Documents/team_project_repo/team_repo/folder'
-
-    # Виклик функції сортування
-    assistant.categorize_files(input_folder, output_folder)
-    sorter.main(input_folder)
+    local_path = input("Введіть назву папки")
+    sorter = FolderOrganizer(local_path)
+    
+    
