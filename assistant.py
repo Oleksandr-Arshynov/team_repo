@@ -417,7 +417,7 @@ class PersonalAssistant:
         new_phone = input(f"Теперішній телефон: {contact.phone}\nВведіть новий телефон (або Enter, щоб залишити без змін): ")
         if new_phone:
             if self.is_valid_phone(new_phone):
-                contact.phone = new_phone
+                contact.phone = new_phone   
             else:
                 console.print("[bold red]Помилка:[/bold red] Некоректний номер телефону.")
 
@@ -438,7 +438,7 @@ class PersonalAssistant:
                 contact.birthday = new_birthday_date
             except ValueError:
                 console.print("[bold red]Помилка:[/bold red] Некоректний формат дати. Залишено попередню дату.")
-
+        self.dump()
         console.print(f"[green]Контакт {contact.name} успішно відредаговано.[/green]")
 
 
