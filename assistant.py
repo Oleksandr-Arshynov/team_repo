@@ -3,15 +3,12 @@ from rich.console import Console
 import re
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
-from tabulate import tabulate
 from rich.table import Table
 from rich.text import Text
 from dateutil import parser
 from rich.live import Live
 import csv
 import shutil
-import os
-import sys
 from pathlib import Path
 
 console = Console()
@@ -33,6 +30,7 @@ class Note:
 
 class FolderOrganizer:
     def __init__(self, folder_path=None):
+        self.folder_path = folder_path
         
         self.CYRILLIC_SYMBOLS = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяєіїґ'
         self.TRANSLATION = ("a", "b", "v", "g", "d", "e", "e", "j", "z", "i", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u",
@@ -82,10 +80,24 @@ class FolderOrganizer:
 
         shutil.move(str(file_name), str(target_path))
 
-    def organize_folder(self):
-        for item in self.folder_path.iterdir():
-            if item.is_file():
-                self.handle_file(item, self.folder_path)
+    def organize_folder(self, local_path):   
+        self.folder_path = Path(local_path) 
+
+        if not self.folder_path.exists() or not self.folder_path.is_dir():     
+            console.print(f'[red]Папка "{self.folder_path}" не існує.[/red]')
+
+            while True:
+                new_user_input = input('Введіть назву папки для сортування (або натисніть "enter", для введення іншої команди): ')
+                if new_user_input == '':
+                    break
+                else:
+                    sorter.organize_folder(new_user_input)
+                    return
+        else:
+            for item in self.folder_path.iterdir():
+                if item.is_file():
+                    self.handle_file(item, self.folder_path)
+            console.print(f'[green]Файли в папці "{self.folder_path.name}" відсортовані.[/green]')
 
 class PersonalAssistant:
     def __init__(self):
@@ -418,9 +430,14 @@ class PersonalAssistant:
                 console.print("[bold red]Помилка:[/bold red] Некоректна електронна пошта.")
 
         # Редагування дня народження
-        new_birthday = input(f"Теперішній день народження: {contact.birthday.strftime('%d-%m-%Y')}\nВведіть новий день народження (або Enter, щоб залишити без змін): ")
-        if new_birthday:
-            contact.birthday = new_birthday
+        new_birthday = input(
+            f"Теперішній день народження: {contact.birthday.strftime('%d-%m-%Y')}\nВведіть новий день народження (або Enter, щоб залишити без змін): ")
+        if new_birthday:     
+            try:
+                new_birthday_date = parser.parse(new_birthday).date()   
+                contact.birthday = new_birthday_date
+            except ValueError:
+                console.print("[bold red]Помилка:[/bold red] Некоректний формат дати. Залишено попередню дату.")
 
         console.print(f"[green]Контакт {contact.name} успішно відредаговано.[/green]")
 
@@ -658,7 +675,7 @@ class PersonalAssistant:
         elif "сортувати нотатки" in normalized_input:
             console.print("[green]Відсортовані нотатки: [/green]")
         elif "сортувати файли" in normalized_input:
-            console.print("[green]Відсортовані файли знаходяться в папці: [/green]")
+            console.print("[green]Для сортування файлів: [/green]")
         elif "вихід" in normalized_input:
             console.print("[green]До нових зустрічей![/green]") 
         elif "допомога" in normalized_input:
@@ -740,7 +757,7 @@ class PersonalAssistant:
             elif "сортувати нотатки" in user_input.lower():
                 assistant.sort_notes_by_tags() 
             elif "сортувати файли" in user_input.lower():
-                local_path = input("Введіть назву папки для сортування: ")
+                local_path = input("Введіть назву папки або шлях до папки для сортування: ")
                 sorter.organize_folder(local_path)
             elif "вихід" in user_input.lower():
                 assistant.dump()
@@ -755,10 +772,3 @@ if __name__ == "__main__":
     sorter = FolderOrganizer() 
     assistant.run()
     
-    if len(sys.argv) == 1:
-        organizer = FolderOrganizer()
-    elif len(sys.argv) == 2:
-        organizer = FolderOrganizer(sys.argv[1])
-    else:
-        print("Використання: python script.py [шлях_до_папки]")
-        sys.exit(1)

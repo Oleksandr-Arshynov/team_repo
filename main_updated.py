@@ -59,13 +59,6 @@ class FolderOrganizer:
             'Archives': {'ZIP', 'GZ', 'TAR'},
         }
 
-        # TO BE DELETED
-        # if folder_path is None:
-        #     self.folder_path = Path("MY_OTHER").resolve()
-        #     print(f"Папка не вказана. Використовується поточний робочий каталог: {self.folder_path}")
-        # else:
-        #     self.folder_path = Path(folder_path).resolve()
-
     def normalize(self, name: str) -> str:
         translate_name = re.sub(r'[^a-zA-Z0-9.]', '_', name.translate(self.TRANS))
         return translate_name
