@@ -740,13 +740,14 @@ class PersonalAssistant:
             elif "сортувати нотатки" in user_input.lower():
                 assistant.sort_notes_by_tags() 
             elif "сортувати файли" in user_input.lower():
-                local_path = input("Введіть назву папки для сортування: ")
+                
                 sorter.organize_folder(local_path)
             elif "вихід" in user_input.lower():
                 assistant.dump()
                 assistant.dump_notes()
                 break
             
+local_path = r'/Users/oleksandrarshinov/Desktop/Documents/team_project_repo/team_repo/Garbage'         
      
 if __name__ == "__main__":
     assistant = PersonalAssistant()
