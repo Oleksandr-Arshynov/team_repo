@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, date, timedelta
 from rich.console import Console
 import re
@@ -10,9 +11,9 @@ from rich.live import Live
 import csv
 import shutil
 from pathlib import Path
-import sys
 
 console = Console()
+
 
 class Contact:
     def __init__(self, name, address, phone, email, birthday):
@@ -22,16 +23,17 @@ class Contact:
         self.email = email
         self.birthday = birthday
 
+
 class Note:
     def __init__(self, text, tags=None):
         self.text = text
         self.tags = tags or []
 
 
-
 class FolderOrganizer:
     def __init__(self, folder_path=None):
-        self.folder_path = folder_path    
+        self.folder_path = folder_path
+        
         self.CYRILLIC_SYMBOLS = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяєіїґ'
         self.TRANSLATION = ("a", "b", "v", "g", "d", "e", "e", "j", "z", "i", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u",
                            "f", "h", "ts", "ch", "sh", "sch", "", "y", "", "e", "yu", "u", "ja", "je", "ji", "g")
@@ -50,11 +52,6 @@ class FolderOrganizer:
             'Archives': {'ZIP', 'GZ', 'TAR'},
         }
 
-        if folder_path is None:
-            self.folder_path = Path("MY_OTHER").resolve()
-            print(f"Папка не вказана. Використовується поточний робочий каталог: {self.folder_path}")
-        else:
-            self.folder_path = Path(folder_path).resolve()
 
     def normalize(self, name: str) -> str:
         translate_name = re.sub(r'[^a-zA-Z0-9.]', '_', name.translate(self.TRANS))
@@ -98,7 +95,6 @@ class FolderOrganizer:
                 if item.is_file():
                     self.handle_file(item, self.folder_path)
             console.print(f'[green]Файли в папці "{self.folder_path.name}" відсортовані.[/green]')
-
 
 class PersonalAssistant:
     def __init__(self):
@@ -225,44 +221,46 @@ class PersonalAssistant:
             console.print("\n" * 2)
             console.print(table, justify="center")
 
-
-
     def dump(self):
         """
         Зберігає книгу контактів у файл CSV.
         """
-        with open('addressbook.csv', 'w', newline='\n') as fh:
+        with open('addressbook.csv', 'w', newline='\n', encoding='utf-8') as fh:
             field_names = ['name', 'address', 'phone', 'email', 'birthday']
             writer = csv.DictWriter(fh, fieldnames=field_names)
             writer.writeheader()
             for contact in self.contacts:
                 writer.writerow({'name': contact.name, 'address': contact.address,
-                                'phone': contact.phone, 'email': contact.email, 'birthday': contact.birthday.strftime('%d-%m-%Y')})
+                                 'phone': contact.phone, 'email': contact.email, 'birthday': contact.birthday.strftime('%d-%m-%Y')})
 
     def load(self):
         """
         Завантажує книгу контактів з файлу CSV.
         """
-        with open('addressbook.csv', newline='\n') as fh:
-            reader = csv.DictReader(fh)
-            for row in reader:
-                name = row['name']
-                address = row['address']
-                phone = row['phone']
-                email = row['email']
-                
-                # Перетворення рядка дати у об'єкт datetime.date
-                birthday_str = row['birthday']
-                birthday = datetime.strptime(birthday_str, '%d-%m-%Y').date()
+        file_path = 'addressbook.csv'
+        if os.path.exists(file_path):
+            with open(file_path, newline='\n') as fh:
+                reader = csv.DictReader(fh)
+                for row in reader:
+                    name = row['name']
+                    address = row['address']
+                    phone = row['phone']
+                    email = row['email']
 
-                new_contact = Contact(
-                    name, address, phone, email, birthday)
-                self.contacts.append(new_contact)
+                    # Перетворення рядка дати у об'єкт datetime.date
+                    birthday_str = row['birthday']
+                    birthday = datetime.strptime(birthday_str, '%d-%m-%Y').date()
 
-        if self.contacts:
-            print("Контакти успішно завантажені.")
+                    new_contact = Contact(
+                        name, address, phone, email, birthday)
+                    self.contacts.append(new_contact)
+
+            if self.contacts:
+                print("Контакти успішно завантажені.")
+            else:
+                print("Не вдалося завантажити контакти або файл порожній.")
         else:
-            print("Не вдалося завантажити контакти або файл порожній.")
+            print(f"Файл '{file_path}' не знайдено. Спробуйте створити файл або перевірити шлях.")
      
             
     def dump_notes(self):
@@ -281,19 +279,23 @@ class PersonalAssistant:
         """
         Завантажує нотатки з файлу CSV.
         """
-        with open('notes.csv', newline='\n') as fh:
-            reader = csv.DictReader(fh)
-            for row in reader:
-                text = row['text']
-                tags = row['tags'].split(', ')
+        file_path = 'notes.csv'
+        if os.path.exists(file_path):
+            with open(file_path, newline='\n') as fh:
+                reader = csv.DictReader(fh)
+                for row in reader:
+                    text = row['text']
+                    tags = row['tags'].split(', ')
 
-                new_note = Note(text, tags)
-                self.notes.append(new_note)
+                    new_note = Note(text, tags)
+                    self.notes.append(new_note)
 
-        if self.notes:
-            print("Нотатки успішно завантажені.")
+            if self.notes:
+                print("Нотатки успішно завантажені.")
+            else:
+                print("Не вдалося завантажити нотатки або файл порожній.")
         else:
-            print("Не вдалося завантажити нотатки або файл порожній.") 
+            print(f"Файл '{file_path}' не знайдено. Спробуйте створити файл або перевірити шлях.")
      
                        
     def upcoming_birthdays(self, days):
@@ -418,7 +420,7 @@ class PersonalAssistant:
         new_phone = input(f"Теперішній телефон: {contact.phone}\nВведіть новий телефон (або Enter, щоб залишити без змін): ")
         if new_phone:
             if self.is_valid_phone(new_phone):
-                contact.phone = new_phone
+                contact.phone = new_phone   
             else:
                 console.print("[bold red]Помилка:[/bold red] Некоректний номер телефону.")
 
@@ -440,7 +442,6 @@ class PersonalAssistant:
             except ValueError:
                 console.print("[bold red]Помилка:[/bold red] Некоректний формат дати. Залишено попередню дату.")
         self.dump()
-
         console.print(f"[green]Контакт {contact.name} успішно відредаговано.[/green]")
 
 
@@ -708,7 +709,6 @@ class PersonalAssistant:
             input("Натисніть Enter для завершення перегляду команд...")  # Очікування вводу від користувача
             live.stop()
 
-
     def run(self):
         completer = WordCompleter(self.commands, ignore_case=True)
         """ Основний цикл виконання програми. Полягає в тому, 
@@ -716,68 +716,61 @@ class PersonalAssistant:
             чекає на введення команди"""
         console = Console()
         console.print(
-        "\n[bold yellow]Вітаю, я ваш особистий помічник![/bold yellow]\n",
-        justify="center",
-        style="bold",
-        width=200,
+            "\n[bold yellow]Вітаю, я ваш особистий помічник![/bold yellow]\n",
+            justify="center",
+            style="bold",
+            width=200,
         )
-        
+
         self.display_commands_table()
-        
+
+        sorter = FolderOrganizer()
+
         while True:
             user_input = prompt("Введіть команду: ", completer=completer).lower()
-            assistant.analyze_user_input(user_input)
+            self.analyze_user_input(user_input)             # self. instead of assistant.
             # Перевірка команд і виклик відповідного методу
             
             if "допомога" in user_input.lower() :
-                assistant.display_commands_table()
+                self.display_commands_table()               # # self. instead of assistant.
             elif "додати контакт" in user_input.lower():
-                assistant.add_contact_from_console()
+                self.add_contact_from_console()
             elif "список контактів" in user_input.lower():
-                assistant.list_contacts()
+                self.list_contacts()
             elif "пошук контактів" in user_input.lower():
-                assistant.search_contacts()
+                self.search_contacts()
             elif 'редагувати контакт' in user_input.lower():
                 contact_to_edit = self.search_contacts() 
-                assistant.edit_contact(contact=contact_to_edit)
+                self.edit_contact(contact=contact_to_edit)
             elif 'видалити контакт' in user_input.lower():
-                assistant.delete_contact()
+                self.delete_contact()
             elif "дні народження" in user_input.lower():
-                assistant.upcoming_birthdays(7)
+                self.upcoming_birthdays(7)
             elif "пошук нотаток" in user_input.lower():
-                assistant.search_notes()
+                self.search_notes()
             elif "додати нотатку" in user_input.lower():
-                assistant.add_note()
+                self.add_note()
             elif "видалити нотатку" in user_input.lower():
-                assistant.delete_note()
+                self.delete_note()
             elif "список нотаток" in user_input.lower():
-                assistant.list_notes()  
+                self.list_notes()
             elif "редагувати нотатку" in user_input.lower():
                 if "редагувати нотатку" in user_input.lower():
                     note_index = int(input("Введіть номер нотатки, яку ви хочете відредагувати: "))
-                    assistant.edit_note(note_index)
+                    self.edit_note(note_index)
             elif "сортувати нотатки" in user_input.lower():
-                assistant.sort_notes_by_tags() 
+                self.sort_notes_by_tags()
             elif "сортувати файли" in user_input.lower():
                 local_path = input("Введіть назву папки або шлях до папки для сортування: ")
                 sorter.organize_folder(local_path)
             elif "вихід" in user_input.lower():
-                assistant.dump()
-                assistant.dump_notes()
+                self.dump()
+                self.dump_notes()
                 break
-        
+            
      
 if __name__ == "__main__":
     assistant = PersonalAssistant()
     assistant.load()
     assistant.load_notes()
-    sorter = FolderOrganizer() 
     assistant.run()
-    
-    if len(sys.argv) == 1:
-        organizer = FolderOrganizer()
-    elif len(sys.argv) == 2:
-        organizer = FolderOrganizer(sys.argv[1])
-    else:
-        print("Використання: python script.py [шлях_до_папки]")
-        sys.exit(1)

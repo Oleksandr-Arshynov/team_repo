@@ -16,7 +16,7 @@
 - Python 3.x
 - Бібліотека Rich (`pip install rich`)
 - Бібліотека Prompt Toolkit (`pip install prompt_toolkit`)
-- Бібліотека Python-dateutil ('pip install python-dateutil')
+- Бібліотека Python-dateutil (`pip install python-dateutil`)
 
 ### Встановлення
 

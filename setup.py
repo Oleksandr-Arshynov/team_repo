@@ -12,7 +12,10 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'your_script_name=your_package.assistant:main',
+            'assistant=TEAM_REPO.assistant:main',
             ]
     }
 )
+
+
+

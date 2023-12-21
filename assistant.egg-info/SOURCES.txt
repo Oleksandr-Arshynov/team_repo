@@ -1,9 +1,0 @@
-setup.py
-TEAM_REPO/__init__.py
-TEAM_REPO/assistant.py
-assistant.egg-info/PKG-INFO
-assistant.egg-info/SOURCES.txt
-assistant.egg-info/dependency_links.txt
-assistant.egg-info/entry_points.txt
-assistant.egg-info/requires.txt
-assistant.egg-info/top_level.txt
