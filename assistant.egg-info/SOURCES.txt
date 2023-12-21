@@ -1,0 +1,11 @@
+README.md
+setup.py
+assistant.egg-info/PKG-INFO
+assistant.egg-info/SOURCES.txt
+assistant.egg-info/dependency_links.txt
+assistant.egg-info/entry_points.txt
+assistant.egg-info/requires.txt
+assistant.egg-info/top_level.txt
+team_repo/__init__.py
+team_repo/assistant.py
+team_repo/main.py

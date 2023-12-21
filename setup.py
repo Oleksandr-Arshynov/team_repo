@@ -12,7 +12,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'assistant=TEAM_REPO.assistant:main',
+            'assistant=team_repo.assistant:main',
             ]
     }
 )

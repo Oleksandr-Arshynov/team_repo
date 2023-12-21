@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: assistant
+Version: 0.1
+Summary: Assistant package
+Requires-Dist: rich
+Requires-Dist: prompt_toolkit
+Requires-Dist: python-dateutil
