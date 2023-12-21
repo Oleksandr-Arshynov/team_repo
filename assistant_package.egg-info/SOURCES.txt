@@ -1,0 +1,11 @@
+README.md
+setup.py
+assistant_package/__init__.py
+assistant_package/assistant.py
+assistant_package/assistant_package.py
+assistant_package.egg-info/PKG-INFO
+assistant_package.egg-info/SOURCES.txt
+assistant_package.egg-info/dependency_links.txt
+assistant_package.egg-info/entry_points.txt
+assistant_package.egg-info/requires.txt
+assistant_package.egg-info/top_level.txt
