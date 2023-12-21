@@ -3,16 +3,14 @@ from rich.console import Console
 import re
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
-from tabulate import tabulate
 from rich.table import Table
 from rich.text import Text
 from dateutil import parser
 from rich.live import Live
 import csv
 import shutil
-import os
-import sys
 from pathlib import Path
+import sys
 
 console = Console()
 
