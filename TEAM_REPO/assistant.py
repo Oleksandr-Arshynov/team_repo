@@ -120,7 +120,7 @@ class PersonalAssistant:
         # Перевірка правильності формату номера телефону
         # Допустимі формати: +380501234567, 050-123-45-67, 0501234567, (050)123-45-67, 0989898989
         phone_pattern = re.compile(r'^\+?\d{1,3}?[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}$')
-        return bool(re.match(phone_pattern, phone))
+        return bool(re.fullmatch(phone_pattern, phone))
 
 
     def is_valid_email(self, email):
@@ -135,17 +135,31 @@ class PersonalAssistant:
         email_pattern = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
         return bool(re.match(email_pattern, email))
 
-    def add_contact_from_console(self):
-        """
-        Забезпечує введення даних нового контакту з консолі та додає його до книги контактів.
-        """
-        console.print("[bold]Додавання нового контакту:[/bold]")
 
+    def add_contact_from_console(self):
+        console.print("[bold]Додавання нового контакту:[/bold]")
         name = input("Ім'я: ")
         address = input("Адреса: ")
-        phone = input("Телефон (формати вводу +380501234567, 050-123-45-67, 0501234567, (050)123-45-67): ")
-        email = input("Електронна пошта: ")
-
+        while True:
+            try:
+                phone_input = input("Телефон (формати вводу +380501234567, 050-123-45-67, 0501234567, (050)123-45-67): ")
+                if self.is_valid_phone(phone_input):
+                    phone = phone_input
+                    break
+                else:
+                    raise ValueError
+            except ValueError:
+                console.print("[bold red]Помилка:[/bold red] Некоректний формат номера телефону. Використовуйте наступний формат: +380501234567, 050-123-45-67, 0501234567 або (050)123-45-67.")
+        while True:
+            try:
+                email_input = input("Електронна пошта: ")
+                if self.is_valid_email(email_input):
+                    email = email_input
+                    break
+                else:
+                    raise ValueError
+            except ValueError:
+                console.print("[bold red]Помилка:[/bold red] Некоректна електронна пошта. Спробуйте ще раз.")
         # Додатково: питаємо користувача про день народження і дозволяємо різні формати
         while True:
             try:
@@ -154,43 +168,20 @@ class PersonalAssistant:
                 break  # Якщо парсинг відбувся успішно, виходимо з циклу
             except ValueError:
                 console.print("[bold red]Помилка:[/bold red] Некоректний формат дати. Спробуйте ще раз.")
-
         self.add_contact(name, address, phone, email, birthday_date)
-
-
+        
+        
     def add_contact(self, name, address, phone, email, birthday):
-        """
-        Додає новий контакт до книги контактів після перевірки правильності введених даних.
-        Args:
-            name (str): Ім'я контакту.
-            address (str): Адреса контакту.
-            phone (str): Номер телефону контакту.
-            email (str): Адреса електронної пошти контакту.
-            birthday (datetime.date): День народження контакту.
-        Returns:
-            None
-        """
-        # Перевірка правильності формату кожного номера телефону
-    
-        if not self.is_valid_phone(phone):
-            console.print("[bold red]Помилка:[/bold red] Некоректний номер телефону.")
-            return
-
-        if not self.is_valid_email(email):
-            console.print("[bold red]Помилка:[/bold red] Некоректна електронна пошта.")
-            return
-
         # Перевірка наявності контакту з такими номерами телефонів в книзі контактів
         existing_contact = next((contact for contact in self.contacts if set(contact.phone) == set(phone)), None)
-
         if existing_contact:
             console.print(f"[bold red]Помилка:[/bold red] Контакт з такими номерами телефонів вже існує.")
             return
-
         # Додавання нового контакту до книги контактів
         new_contact = Contact(name, address, phone, email, birthday)
         self.contacts.append(new_contact)
         console.print(f"[green]Контакт {name} успішно доданий до книги контактів.[/green]")
+
 
             
     def list_contacts(self):
@@ -582,7 +573,8 @@ class PersonalAssistant:
         else:
             console.print("[red]Невірний індекс нотатки. Спробуйте ще раз.[/red]")
 
-    
+                
+
     def delete_note(self):
         """
         Видаляє нотатку користувача за текстом, назвою або тегом.
@@ -756,8 +748,17 @@ class PersonalAssistant:
                 self.list_notes()
             elif "редагувати нотатку" in user_input.lower():
                 if "редагувати нотатку" in user_input.lower():
-                    note_index = int(input("Введіть номер нотатки, яку ви хочете відредагувати: "))
-                    self.edit_note(note_index)
+                    while True:
+                        try:
+                            note_index = int(input("Введіть номер нотатки, яку ви хочете відредагувати: "))
+                            if note_index == "":
+                                raise ValueError
+                            else:
+                                self.edit_note(note_index)
+                                break
+                        except ValueError: ("Не вказано номер нотатки!")
+                        
+                    
             elif "сортувати нотатки" in user_input.lower():
                 self.sort_notes_by_tags()
             elif "сортувати файли" in user_input.lower():
