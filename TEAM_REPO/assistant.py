@@ -781,3 +781,4 @@ if __name__ == "__main__":
     assistant_instance = main()
     user_input = "example"
     assistant_instance.analyze_user_input(user_input)
+    assistant_instance.run(debug=False, host='0.0.0.0')
